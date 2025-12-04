@@ -1,0 +1,160 @@
+Problem :- 
+- Data Redundancy & Inconsistency :-Poor database design (no normalization) leads to duplicate entries of theatres, movies, or customers.
+- Lack Of Referential Integrity :- Some systems don’t enforce foreign key constraints, allowing orphan records — e.g.,
+	a.A booking referring to a show_id that doesn’t exist.
+	b.A showtime for a deleted movie.
+- No Real-Time Seat Availability Updates :- In many SQL systems, seat availability is stored as a static number, not updated instantly when multiple users book simultaneously.
+
+Solution in my system :- 
+- Avoid Data Redundancy & Inconsistency :- Removes duplicate entries, ensures clean and consistent data.
+- Maintain Referential Integrity :- Automatically deletes or updates related records to prevent inconsistencies.
+- Prevent Overbooking (Concurrency Issue):- Guarantees accurate seat counts even with multiple simultaneous bookings.
+
+MySQL CODE :-
+create database MovieBookingSystem;
+
+create table Theater (
+t_id int auto_increment primary key,
+t_name varchar(50),
+t_location varchar(100),
+t_capacity int,
+t_screens int,
+t_rating int
+);
+
+create table movie(
+m_id int auto_increment primary key,
+m_name varchar(100),
+m_genre varchar(50),
+m_duration time,
+m_rating int,
+m_language varchar(50)
+);
+
+create table Shows (
+s_id int auto_increment primary key,
+t_id int references Theater(t_id),
+t_capacity int references Theater(t_capacity),
+m_id int references movie(m_id),
+s_date date,
+s_time time,
+ticket_price decimal(8,2),
+tickets_booked int references bookings(tickets_booked),
+avaliable_seats int as (t_capacity - tickets_booked)
+);
+
+select * from Shows;
+
+create table customers(
+c_id int auto_increment primary key,
+c_name varchar(50),
+c_email varchar(100),
+c_phone int 
+);
+
+create table Bookings (
+b_id int auto_increment primary key,
+m_id int references movie(m_id),
+c_id int references customers(c_id),
+s_id int references shows(s_id),
+booking_date date,
+tickets_booked int,
+ticket_price decimal(8,2) references shows(ticket_price),
+total_amount decimal(8,2) as (tickets_booked * ticket_price)
+);
+
+insert into bookings (m_id,c_id,s_id,booking_date,tickets_booked,ticket_price) values 
+(1,2,2,'2025-10-10',4,300),
+(2,3,1,'2025-10-11',3,150),
+(4,3,3,'2025-10-12',2,200),
+(4,4,4,'2025-10-13',6,250),
+(5,5,5,'2025-10-14',8,500),
+(3, 11, 3, '2025-10-20', 2, 180),
+(2, 12, 2, '2025-10-21', 3, 160),
+(1, 13, 1, '2025-10-22', 1, 200),
+(5, 14, 5, '2025-10-23', 7, 480),
+(9, 15, 9, '2025-10-24', 5, 300);
+
+select * from bookings;
+
+INSERT INTO theatre (t_name, t_location, t_capacity, t_screens, t_rating) VALUES
+('PVR Icon', 'Goregoan', 320, 4, 5),
+('Inox City Center', 'Andheri', 280, 4, 5),
+('Cenepolis', 'Bandra', 300, 4, 5),
+('Carnival Cinema', 'Borivali', 260, 3, 4),
+('Miraj Plazza', 'Goregoan', 250, 2, 3),
+('PVR Forum', 'Malad', 300, 5, 5),
+('INOX Plazza', 'Jogeshwari', 290, 4, 5),
+('PVR Gold', 'Khar', 320, 6, 5),
+('Cinepolis Square', 'Jogeshwari', 280, 3, 5),
+('City Pride', 'Andheri', 200, 2, 4);
+
+select * from theater;
+
+INSERT INTO movie (m_name, m_genre, m_duration, m_rating, m_language) VALUES
+('Avenger : Endgame', 'Action', 180, 9, 'English'),
+('Barbie', 'Comedy', 110, 8, 'English'),
+('Oppenheimer', 'Drama', 180, 9, 'English'),
+('Inside Out 2', 'Animation', 100, 8, 'English'),
+('Leo', 'Action', 164, 7, 'Tamil'),
+('Pathan', 'Action', 146, 7, 'Hindi'),
+('Jawan', 'Action', 169, 8, 'Hindi'),
+('3 Idiots', 'Comedy', 171, 8, 'Hindi'),
+('Zindagi Na Milegi Dobara', 'Drama', 155, 8, 'Hindi'),
+('Kantara', 'Thriller', 147, 8, 'Kannada');
+
+select * from movie;
+
+INSERT INTO customers (c_name, c_email, c_phone) VALUES
+('Ananya Sharma', 'ananya.sharma@gmail.com', '9876543210'),
+('Rohit Mehta', 'rohit.mehta@yahoo.com', '9823456789'),
+('Sneha Patel', 'sneha.patel@gmail.com', '9865432109'),
+('Arjun Reddy', 'arjun.reddy@outlook.com', '9812345678'),
+('Priya Verma', 'priya.verma@gmail.com', '9898765432'),
+('Karan Singh', 'karan.singh@gmail.com', '9845678901'),
+('Meera Nair', 'meera.nair@gmail.com', '9834567890'),
+('Vikram Das', 'vikram.das@yahoo.com', '9876501234'),
+('Riya Kapoor', 'riya.kapoor@gmail.com', '9812340987'),
+('Amit Joshi', 'amit.joshi@hotmail.com', '9823409876');
+
+INSERT INTO shows (t_id,t_capacity, m_id, s_date, s_time, ticket_price,tickets_booked) VALUES
+(1,320, 1, '2025-10-10', '18:00:00', 200.00,4),
+(2,280, 2, '2025-10-11', '21:00:00', 250.00,3),
+(3,300, 3, '2025-10-12', '17:00:00', 150.00,2),
+(4,260, 4, '2025-10-13', '10:30:00', 200.00,6),
+(5,250, 5, '2025-10-15', '20:00:00', 300.00,8),
+(6,300, 6, '2025-10-16', '19:00:00', 500.00,2),
+(7,290, 7, '2025-10-17', '20:30:00', 400.00,3),
+(8,320, 8, '2025-10-18', '18:00:00', 100.00,1),
+(9,280, 9, '2025-10-19', '20:00:00', 300.00,7),
+(10,200, 10, '2025-10-20', '18:00:00', 500.00,5);
+select * from shows;
+
+# Most Popular Movies 
+CREATE VIEW Popular_Movies AS
+SELECT m.m_name, SUM(b.tickets_booked) AS Total_Tickets
+FROM Bookings b
+JOIN Movie m ON b.m_id = m.m_id
+GROUP BY m.m_name
+ORDER BY Total_Tickets DESC;
+
+select * from Popular_movies;
+
+# Peak Booking Dates
+CREATE VIEW Peak_Booking_Dates AS
+SELECT booking_date, COUNT(b_id) AS Total_Bookings
+FROM Bookings
+GROUP BY booking_date
+ORDER BY Total_Bookings DESC;
+
+select * from Peak_Booking_Dates;
+
+# Revenue each movie generated
+CREATE VIEW Revenue_Movie AS
+SELECT m.m_name, SUM(b.total_amount) AS Total_Revenue
+FROM Bookings b
+JOIN Movie m ON b.m_id = m.m_id
+GROUP BY m.m_name
+ORDER BY Total_Revenue DESC;
+
+select * from Revenue_Movie;
